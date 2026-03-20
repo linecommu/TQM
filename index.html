@@ -140,7 +140,7 @@
       } catch (error) { document.getElementById('status-text').innerText = "เกิดข้อผิดพลาดในการดึงข้อมูล"; }
     }
 
-    // ยิง API ไปบันทึกก้าวเดิน
+   // ยิง API ไปบันทึกก้าวเดินแบบไม่มีขั้นต่ำ
     async function checkConditionAndSave(steps) {
       const formSec = document.getElementById("form-section");
       const resultSec = document.getElementById("result-section");
@@ -157,34 +157,30 @@
       formSec.style.display = "none";
       resultSec.style.display = "block";
 
-      if (steps < 7000) {
-        resultTitle.innerText = "🏃‍♂️ พยายามอีกนิดนะ!";
-        resultTitle.style.color = "#ff9800";
-        stepResult.innerHTML = `วันนี้คุณเดินได้ <b>${steps.toLocaleString()} ก้าว</b><br><br><span style='color:red; font-size:14px;'>เงื่อนไข: ต้องเดิน 100 ก้าวขึ้นไป ระบบจึงจะบันทึกให้ครับ</span>`;
-        rewardBtn.style.display = "none";
-      } else {
-        resultTitle.innerText = "⏳ กำลังบันทึกข้อมูล...";
-        resultTitle.style.color = "#666";
+      resultTitle.innerText = "⏳ กำลังบันทึกข้อมูล...";
+      resultTitle.style.color = "#666";
         
-        try {
-          const response = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            redirect: 'follow', // เพิ่มบรรทัดนี้
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // เพิ่มบรรทัดนี้
-            body: JSON.stringify({ action: 'recordSteps', uid: lineUserId, firstName: inputFirstName, lastName: inputLastName, steps: steps })
-          });
-          const res = await response.json();
+      try {
+        const response = await fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'recordSteps', uid: lineUserId, firstName: inputFirstName, lastName: inputLastName, steps: steps })
+        });
+        const res = await response.json();
           
-          if(res.status === "success") {
-            resultTitle.innerText = "✅ บันทึกสำเร็จ!";
-            resultTitle.style.color = "#28a745";
-            stepResult.innerHTML = `ยอดวันนี้: <b>${steps.toLocaleString()} ก้าว</b>`;
-            rewardBtn.style.display = "block";
-          }
-        } catch(e) {
-            resultTitle.innerText = "❌ บันทึกล้มเหลว";
+        if(res.status === "success") {
+          resultTitle.innerText = "✅ บันทึกสำเร็จ!";
+          resultTitle.style.color = "#28a745";
+          // แสดงจำนวนก้าว และข้อความให้กำลังใจ
+          stepResult.innerHTML = `ยอดวันนี้: <b>${steps.toLocaleString()} ก้าว</b><br><br><span style='color:#666; font-size:14px;'>บันทึกข้อมูลของคุณเข้าสู่ระบบเรียบร้อยแล้ว เยี่ยมมากครับ!</span>`;
+          rewardBtn.style.display = "block";
         }
+      } catch(e) {
+          resultTitle.innerText = "❌ บันทึกล้มเหลว";
+          stepResult.innerHTML = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่อีกครั้ง";
       }
+    }
     }
   </script>
 </body>
