@@ -36,38 +36,31 @@
   <div class="footer-text">ระบบลงทะเบียนพนักงาน © 2026 Internal Use Only Channel Academy&Communication</div>
 
 <script>
-    // ========= ตั้งค่า 3 ตัวแปรนี้ให้ครบ =========
+    // ========= 1. ตั้งค่าตัวแปร (เหมือนเดิม) =========
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywpUQFxq4D8hrROE4cUKUJiESWO6u9_FbNecjre7oAYL11gzHeBQMcIUsnlkoaqKbhUQ/exec';
     const GOOGLE_CLIENT_ID = '731149810126-a014l53tne9jibs12bb9btfmbl3clktc.apps.googleusercontent.com';
     const LIFF_ID = '2009549576-QRJfiper';
-    // =============================================
+    
+    // 🌟 2. ใส่ลิงก์เว็บ GitHub ของคุณตรงนี้ (สังเกตว่า **ไม่ต้องมี https://** ข้างหน้านะครับ!) 🌟
+    const GITHUB_DOMAIN_PATH = "ชื่อผู้ใช้ของคุณ.github.io/ชื่อโปรเจกต์ของคุณ/index.html";
+    const FULL_URL = "https://" + GITHUB_DOMAIN_PATH;
 
     let lineUserId = "Unknown";
     let tokenClient;
     let isRegistered = false;
 
-    // ฟังก์ชันหลัก ทำงานทันทีที่เปิดหน้าเว็บ
+    // ฟังก์ชันหลัก
     async function main() {
       try {
-        document.getElementById('welcome-text').innerText = "กำลังเตรียมความพร้อม...";
         await liff.init({ liffId: LIFF_ID });
 
-        // เช็คว่าเปิดอยู่ในแอป LINE หรือไม่
+        // ถ้าเปิดอยู่ในแอป LINE ให้บังคับยิงไป Google Chrome ทันที!
         if (liff.isInClient()) {
-          document.getElementById('welcome-text').innerText = "กรุณาเปิดในเบราว์เซอร์หลัก (Chrome/Safari)";
-          document.getElementById('welcome-text').style.color = "#ff9800";
-          
-          // เปลี่ยนหน้าจอเป็นปุ่มกดสลับแอป เผื่อระบบไม่เด้งอัตโนมัติ
-          document.getElementById('form-section').innerHTML = `
-            <div style="text-align:center; margin-bottom:15px;">ระบบของ Google ต้องใช้งานผ่านเบราว์เซอร์หลักเท่านั้นครับ</div>
-            <button class="sync-btn" style="background-color: #00B900;" onclick="openExternal()">🚀 คลิกที่นี่เพื่อเปิดเบราว์เซอร์</button>
-          `;
-
-          // สั่งให้เด้งไป Safari/Chrome อัตโนมัติ
-          openExternal();
-          
+          document.getElementById('welcome-text').innerText = "กำลังสลับไปเปิดแอป Google Chrome...";
+          document.getElementById('welcome-text').style.color = "#00B900";
+          forceOpenChrome();
         } else {
-          // ถ้าเปิดในเบราว์เซอร์หลักแล้ว ให้ทำงานตามปกติ
+          // ถ้าเปิดใน Chrome สำเร็จแล้ว ให้ทำงานตามปกติ
           if (!liff.isLoggedIn()) {
             liff.login();
           } else {
@@ -78,20 +71,33 @@
           }
         }
       } catch (err) {
-        // ถ้ามี Error จะไม่จอขาวแล้ว แต่จะแสดงข้อความสีแดงบอกสาเหตุ
         document.getElementById('welcome-text').innerText = "เกิดข้อผิดพลาด: " + err.message;
         document.getElementById('welcome-text').style.color = "red";
       }
     }
 
-    // สั่งเริ่มทำงาน
     window.onload = main;
 
-    function openExternal() {
-      liff.openWindow({
-        url: window.location.href, // ใช้ลิงก์ปัจจุบันเด้งออกไปเลย
-        external: true
-      });
+    // 🌟 ท่าไม้ตาย: ฟังก์ชันบังคับเปิดแอป Google Chrome (Deep Link) 🌟
+    function forceOpenChrome() {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+      if (/android/i.test(userAgent)) {
+        // สำหรับ Android: บังคับยิงเข้า Package ของ Google Chrome โดยตรง
+        window.location.href = "intent://" + GITHUB_DOMAIN_PATH + "#Intent;scheme=https;package=com.android.chrome;end;";
+      } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        // สำหรับ iOS: ใช้คำสั่ง googlechromes:// เพื่อเรียกแอป Chrome
+        window.location.href = "googlechromes://" + GITHUB_DOMAIN_PATH;
+        
+        // สำรองสำหรับ iOS: ถ้าพนักงานคนไหนไม่ได้ลงแอป Chrome ไว้ในเครื่อง 
+        // ภายใน 2 วินาทีระบบจะพาไปเปิดใน Safari แทน เพื่อไม่ให้หน้าจอค้าง
+        setTimeout(function() {
+          window.location.href = FULL_URL;
+        }, 2000);
+      } else {
+        // สำหรับทดสอบบน PC
+        window.location.href = FULL_URL;
+      }
     }
 
     // เตรียมระบบ Google Fit
