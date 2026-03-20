@@ -60,6 +60,8 @@
       try {
         const response = await fetch(GAS_WEB_APP_URL, {
           method: 'POST',
+          redirect: 'follow', // เพิ่มบรรทัดนี้
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // เพิ่มบรรทัดนี้
           body: JSON.stringify({ action: 'checkUser', uid: uid })
         });
         const user = await response.json();
@@ -150,6 +152,8 @@
         try {
           const response = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
+            redirect: 'follow', // เพิ่มบรรทัดนี้
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // เพิ่มบรรทัดนี้
             body: JSON.stringify({ action: 'recordSteps', uid: lineUserId, firstName: inputFirstName, lastName: inputLastName, steps: steps })
           });
           const res = await response.json();
