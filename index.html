@@ -48,11 +48,25 @@
 
     async function initializeLiff() {
       await liff.init({ liffId: LIFF_ID });
+      
+      // 🌟 ท่าไม้ตาย: เช็คว่าถ้าเปิดในแอป LINE ให้บังคับเด้งไป Chrome/Safari อัตโนมัติ 🌟
+      if (liff.isInClient()) {
+        liff.openWindow({
+          url: window.location.href, // ดึงลิงก์ปัจจุบันไปเปิดข้างนอก
+          external: true
+        });
+        // ปิดหน้าต่างแชท LINE อันเดิมทิ้งไปเลย
+        liff.closeWindow();
+        return; 
+      }
+
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
         lineUserId = profile.userId;
         checkUserInDatabase(lineUserId);
-      } else { liff.login(); }
+      } else { 
+        liff.login(); 
+      }
     }
 
     // ยิง API ไปเช็คชื่อพนักงาน
