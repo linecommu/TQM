@@ -1,59 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>บันทึกก้าวเดิน</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background: linear-gradient(to bottom, #8B0000, #FF6666); margin: 0; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    .form-container { background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 100%; max-width: 350px; box-sizing: border-box; }
+    input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+    .sync-btn { width: 100%; padding: 12px; background-color: #4285F4; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-bottom: 15px; }
+    .reward-btn { display: none; width: 100%; padding: 15px; background: linear-gradient(to right, #cc0000, #ff4d4d); color: #ffffff; text-align: center; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; text-decoration: none; margin-top: 15px; box-sizing: border-box; }
+    .footer-text { color: gray; text-align: center; font-size: 12px; margin-top: auto; padding-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2 style="text-align: center; color: #333; margin-top: 0;">🏃‍♂️ ซิงค์ก้าวเดิน</h2>
+    <div id="form-section">
+      <div id="welcome-text" style="text-align: center; margin-bottom: 15px; color: #8B0000; font-weight: bold;">กำลังโหลดข้อมูล...</div>
+      <div id="register-section" style="display: none;">
+        <input type="text" id="firstName" placeholder="ชื่อจริง (ไม่ต้องใส่คำนำหน้า)">
+        <input type="text" id="lastName" placeholder="นามสกุล">
+      </div>
+      <button class="sync-btn" onclick="authAndFetchSteps()" id="syncBtn" style="display: none;">ดึงข้อมูล Google Fit</button>
+      <div id="status-text" style="text-align: center; font-size: 14px; color: #666; margin-top: 10px;"></div>
+    </div>
+    <div id="result-section" style="display: none; text-align: center;">
+      <h3 id="result-title"></h3>
+      <p id="step-result"></p>
+      <a href="ใส่_URL_สำหรับลงทะเบียนรางวัลตรงนี้" target="_blank" class="reward-btn" id="rewardBtn">ลงทะเบียน LINE Reward รับฟรี 100 Point</a>
+    </div>
+  </div>
+  <div class="footer-text">ระบบลงทะเบียนพนักงาน © 2026 Internal Use Only Channel Academy&Communication</div>
+
 <script>
-    // ========= 1. ตั้งค่า 4 ตัวแปรนี้ให้ครบ =========
+    // ========= ตั้งค่า 3 ตัวแปรนี้ให้ครบ =========
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywpUQFxq4D8hrROE4cUKUJiESWO6u9_FbNecjre7oAYL11gzHeBQMcIUsnlkoaqKbhUQ/exec';
     const GOOGLE_CLIENT_ID = '731149810126-a014l53tne9jibs12bb9btfmbl3clktc.apps.googleusercontent.com';
     const LIFF_ID = '2009549576-QRJfiper';
-    
-    // ใส่ลิงก์เว็บ GitHub ของคุณ (ห้ามลืม /index.html ต่อท้ายเด็ดขาด)
-    const GITHUB_URL = 'https://linecommu.github.io/TQM/index.html';
     // =============================================
 
     let lineUserId = "Unknown";
     let tokenClient;
     let isRegistered = false;
 
-    // ระบบรับไม้ผลัด (ทำงานทันทีที่เปิดเว็บ)
-    window.onload = async function () {
-      // เช็คว่ามี UID ส่งมากับ URL ไหม (แปลว่าถูกเตะออกมาเบราว์เซอร์หลักแล้ว)
-      const urlParams = new URLSearchParams(window.location.search);
-      const uidFromUrl = urlParams.get('uid');
-
-      if (uidFromUrl) {
-        // --- ส่วนที่ 2: ทำงานบนเบราว์เซอร์ภายนอก (ได้ UID มาแล้ว ไม่ต้องใช้ LINE Login ซ้ำ) ---
-        lineUserId = uidFromUrl;
-        checkUserInDatabase(lineUserId);
-        initGoogleFit();
-      } else {
-        // --- ส่วนที่ 1: ทำงานในแอป LINE OA ---
+    // ฟังก์ชันหลัก ทำงานทันทีที่เปิดหน้าเว็บ
+    async function main() {
+      try {
+        document.getElementById('welcome-text').innerText = "กำลังเตรียมความพร้อม...";
         await liff.init({ liffId: LIFF_ID });
-        
-        if (liff.isInClient()) {
-          // ดึง UID ของพนักงานจากแอป LINE
-          const profile = await liff.getProfile();
-          const uid = profile.userId;
-          
-          document.getElementById('welcome-text').innerText = "กำลังสลับไปเปิดบนเบราว์เซอร์หลัก...";
-          
-          // ส่ง UID แนบไปกับลิงก์ แล้วเตะออกไปเปิด Safari/Chrome อัตโนมัติ!
-          liff.openWindow({
-            url: GITHUB_URL + "?uid=" + uid,
-            external: true
-          });
-        } else {
-           // กรณีพนักงานเปิดทดสอบบนคอมพิวเตอร์ (PC)
-           if (!liff.isLoggedIn()) { 
-             liff.login(); 
-           } else {
-             const profile = await liff.getProfile();
-             lineUserId = profile.userId;
-             checkUserInDatabase(lineUserId);
-             initGoogleFit();
-           }
-        }
-      }
-    };
 
-    // เตรียมระบบล็อกอิน Google Fit
+        // เช็คว่าเปิดอยู่ในแอป LINE หรือไม่
+        if (liff.isInClient()) {
+          document.getElementById('welcome-text').innerText = "กรุณาเปิดในเบราว์เซอร์หลัก (Chrome/Safari)";
+          document.getElementById('welcome-text').style.color = "#ff9800";
+          
+          // เปลี่ยนหน้าจอเป็นปุ่มกดสลับแอป เผื่อระบบไม่เด้งอัตโนมัติ
+          document.getElementById('form-section').innerHTML = `
+            <div style="text-align:center; margin-bottom:15px;">ระบบของ Google ต้องใช้งานผ่านเบราว์เซอร์หลักเท่านั้นครับ</div>
+            <button class="sync-btn" style="background-color: #00B900;" onclick="openExternal()">🚀 คลิกที่นี่เพื่อเปิดเบราว์เซอร์</button>
+          `;
+
+          // สั่งให้เด้งไป Safari/Chrome อัตโนมัติ
+          openExternal();
+          
+        } else {
+          // ถ้าเปิดในเบราว์เซอร์หลักแล้ว ให้ทำงานตามปกติ
+          if (!liff.isLoggedIn()) {
+            liff.login();
+          } else {
+            const profile = await liff.getProfile();
+            lineUserId = profile.userId;
+            checkUserInDatabase(lineUserId);
+            initGoogleFit();
+          }
+        }
+      } catch (err) {
+        // ถ้ามี Error จะไม่จอขาวแล้ว แต่จะแสดงข้อความสีแดงบอกสาเหตุ
+        document.getElementById('welcome-text').innerText = "เกิดข้อผิดพลาด: " + err.message;
+        document.getElementById('welcome-text').style.color = "red";
+      }
+    }
+
+    // สั่งเริ่มทำงาน
+    window.onload = main;
+
+    function openExternal() {
+      liff.openWindow({
+        url: window.location.href, // ใช้ลิงก์ปัจจุบันเด้งออกไปเลย
+        external: true
+      });
+    }
+
+    // เตรียมระบบ Google Fit
     function initGoogleFit() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
@@ -64,7 +105,7 @@
       });
     }
 
-    // ยิง API ไปเช็คชื่อพนักงาน
+    // ยิง API เช็คชื่อ
     async function checkUserInDatabase(uid) {
       try {
         const response = await fetch(GAS_WEB_APP_URL, {
@@ -78,18 +119,20 @@
         if (user) {
           isRegistered = true;
           document.getElementById('welcome-text').innerText = "สวัสดีคุณ " + user.firstName;
+          document.getElementById('welcome-text').style.color = "#8B0000";
         } else {
           isRegistered = false;
           document.getElementById('welcome-text').innerText = "ลงทะเบียนใช้งานครั้งแรก";
-          document.getElementById('register-section').style.display = "block";
         }
+        document.getElementById('register-section').style.display = isRegistered ? "none" : "block";
         document.getElementById('syncBtn').style.display = "block";
       } catch (error) {
         document.getElementById('welcome-text').innerText = "เชื่อมต่อฐานข้อมูลล้มเหลว";
+        document.getElementById('welcome-text').style.color = "red";
       }
     }
 
-    // กดปุ่มซิงค์ก้าวเดิน
+    // กดปุ่มซิงค์ก้าว
     function authAndFetchSteps() {
       if (!isRegistered) {
         const fName = document.getElementById('firstName').value;
@@ -100,7 +143,7 @@
       tokenClient.requestAccessToken();
     }
 
-    // ดึงข้อมูลก้าวเดิน
+    // ดึงก้าวเดิน
     async function fetchStepsData(accessToken) {
       document.getElementById('status-text').innerText = "กำลังคำนวณจำนวนก้าว...";
       const now = new Date();
@@ -123,7 +166,7 @@
       } catch (error) { document.getElementById('status-text').innerText = "เกิดข้อผิดพลาดในการดึงข้อมูล"; }
     }
 
-    // ยิง API ไปบันทึกข้อมูล
+    // บันทึกลง Sheet
     async function checkConditionAndSave(steps) {
       const formSec = document.getElementById("form-section");
       const resultSec = document.getElementById("result-section");
@@ -139,7 +182,6 @@
 
       formSec.style.display = "none";
       resultSec.style.display = "block";
-
       resultTitle.innerText = "⏳ กำลังบันทึกข้อมูล...";
       resultTitle.style.color = "#666";
         
@@ -164,3 +206,5 @@
       }
     }
   </script>
+</body>
+</html>
