@@ -46,26 +46,29 @@
     let tokenClient;
     let isRegistered = false;
 
+    // 🌟 ใส่ลิงก์ GitHub ของคุณตรงนี้ (อย่าลืมเครื่องหมาย / ปิดท้าย และต้องเป็น https)
+    const GITHUB_URL = "https://github.com/linecommu/TQM/";
+
     async function initializeLiff() {
       await liff.init({ liffId: LIFF_ID });
       
-      // 🌟 ท่าไม้ตาย: เช็คว่าถ้าเปิดในแอป LINE ให้บังคับเด้งไป Chrome/Safari อัตโนมัติ 🌟
+      // 1. ถ้าเปิดจากในแอป LINE ให้เตะออกไปที่เบราว์เซอร์ (ใช้ลิงก์ GitHub โดยตรง เพื่อแก้ปัญหาเด้งวนลูป)
       if (liff.isInClient()) {
         liff.openWindow({
-          url: window.location.href, // ดึงลิงก์ปัจจุบันไปเปิดข้างนอก
+          url: GITHUB_URL, 
           external: true
         });
-        // ปิดหน้าต่างแชท LINE อันเดิมทิ้งไปเลย
-        liff.closeWindow();
         return; 
       }
 
+      // 2. ถ้าอยู่บนเบราว์เซอร์ (Safari/Chrome) แล้ว ให้ทำงานตามปกติ
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
         lineUserId = profile.userId;
         checkUserInDatabase(lineUserId);
       } else { 
-        liff.login(); 
+        // 3. ถ้ายังไม่ล็อกอิน ให้ล็อกอิน และบังคับให้กลับมาที่หน้า GitHub เดิม (ไม่ให้เด้งกลับเข้าแอป LINE)
+        liff.login({ redirectUri: GITHUB_URL }); 
       }
     }
 
