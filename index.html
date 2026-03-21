@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>ระบบลงทะเบียนพนักงาน Channel Academy</title>
+  <title>ระบบลงทะเบียนพนักงาน Google Fit Sync</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -27,7 +27,7 @@
     .sync-btn:hover { background-color: var(--primary-dark); }
     .chrome-btn { background-color: #4285F4; box-shadow: 0 4px 10px rgba(66,133,244,0.3); }
     #status-text { text-align: center; font-size: 14px; color: var(--text-sub); margin-top: 15px; }
-    #result-title { font-family: 'Kanit', sans-serif; font-weight: 600; display: none; } /* ซ่อนไว้เพราะเราจะไปแก้ที่หัวข้อหลักแทน */
+    #result-title { font-family: 'Kanit', sans-serif; font-weight: 600; }
     #rewardBtn { display: none; margin-top: 20px; text-decoration: none; text-align: center; }
     .footer { text-align: center; font-size: 12px; color: var(--text-sub); margin-top: 30px; }
     
@@ -44,15 +44,15 @@
       <img src="https://img2.pic.in.th/Google-Fit.png" alt="Channel Academy Logo">
     </div>
     
-    <h2 id="main-title">ลงทะเบียนและเชื่อมต่อข้อมูล</h2>
-    <div id="sub-title" class="sub-title">User Registration & Google Fit Sync</div>
+    <h2>ลงทะเบียนเชื่อมต่อข้อมูล</h2>
+    <div class="sub-title">อัตโนมัติ ใช้สำหรับกิจกรรมเท่านั้น</div>
     
     <div id="form-section">
       <div id="welcome-text" style="text-align: center; margin-bottom: 20px; font-weight: 600;">กำลังตรวจสอบสถานะ...</div>
       
       <div id="register-section" style="display: none;">
-        <input type="text" id="firstName" placeholder="ชื่อจริง (ไม่ต้องใส่คำนำหน้า) / First Name">
-        <input type="text" id="lastName" placeholder="นามสกุล / Last Name">
+        <input type="text" id="firstName" placeholder="ชื่อจริง (ไม่ต้องใส่คำนำหน้า) ">
+        <input type="text" id="lastName" placeholder="นามสกุล">
       </div>
       
       <button class="sync-btn" onclick="authAndFetchSteps()" id="syncBtn" style="display: none;">เชื่อมต่อ Google Fit เพื่อเริ่มสะสมก้าว</button>
@@ -61,14 +61,14 @@
 
     <div id="result-section" style="display: none; text-align: center;">
       <h3 id="result-title"></h3>
-      <div id="step-result" style="margin: 5px 0;"></div>
+      <p id="step-result" style="font-size: 15px; margin: 15px 0;"></p>
       <a href="https://linecommu.github.io/Leaderboard/leaderboard.html" target="_blank" class="sync-btn" id="rewardBtn">ดูอันดับความฟิต</a>
     </div>
   </div>
   
   <div class="footer">
-    ระบบลงทะเบียนพนักงาน © 2026<br>
-    Channel Academy&Communication
+    ระบบลงทะเบียนพนักงานสะสมก้าว © 2026<br>
+    
   </div>
 
  <script>
@@ -105,6 +105,7 @@
             lineUserId = profile.userId;
             checkUserInDatabase(lineUserId);
             
+            // 🌟 แก้ไขตรงนี้: เปลี่ยนเป็นชื่อฟังก์ชันที่ถูกต้อง 🌟
             initGoogleAuthCodeClient(); 
           }
         }
@@ -120,16 +121,23 @@
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
       if (/android/i.test(userAgent)) {
+        // สำหรับ Android: บังคับยิงเข้า Package ของ Google Chrome โดยตรง
         window.location.href = "intent://" + GITHUB_DOMAIN_PATH + "#Intent;scheme=https;package=com.android.chrome;end;";
       } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        // สำหรับ iOS: ใช้คำสั่ง googlechromes:// เพื่อเรียกแอป Chrome
         window.location.href = "googlechromes://" + GITHUB_DOMAIN_PATH;
+        
+        // สำรองสำหรับ iOS: ถ้าพนักงานคนไหนไม่ได้ลงแอป Chrome ไว้ในเครื่อง 
+        // ภายใน 2 วินาทีระบบจะพาไปเปิดใน Safari แทน เพื่อไม่ให้หน้าจอค้าง
         setTimeout(function() {
           window.location.href = FULL_URL;
         }, 2000);
       } else {
+        // สำหรับทดสอบบน PC
         window.location.href = FULL_URL;
       }
     }
+
 
     // ----------------------------------------------------------------------
     // ส่วนล่างนี้คือฟังก์ชันเดิมทั้งหมด
@@ -156,6 +164,7 @@
         
         if (user) {
           isRegistered = true;
+          // 🌟 แก้ไขตรงนี้: เพิ่มการแสดงนามสกุล 🌟
           document.getElementById('welcome-text').innerHTML = `ยินดีต้อนรับ คุณ <span style="color:var(--primary); font-size:18px;">${user.firstName} ${user.lastName}</span>`;
           if(user.hasToken) {
             document.getElementById('welcome-text').innerHTML += "<br><span style='color:#28a745; font-size: 14px; font-weight: 400;'>✅ ระบบจะดึงยอดก้าวเดินของคุณให้ทุกวันอัตโนมัติครับ</span>";
@@ -186,7 +195,7 @@
     async function sendCodeAndRegisterToGAS(authCode) {
       document.getElementById("form-section").style.display = "none";
       document.getElementById("result-section").style.display = "block";
-      document.getElementById("step-result").innerHTML = "<div style='color:#666;'>⏳ กำลังตั้งค่าระบบ...</div>";
+      document.getElementById("result-title").innerText = "⏳ กำลังตั้งค่าระบบ...";
         
       try {
         const response = await fetch(GAS_WEB_APP_URL, {
@@ -196,53 +205,19 @@
         const res = await response.json();
           
         if (res.status === "success") {
-          // 🌟 1. เปลี่ยนหัวข้อหลัก 🌟
-          document.getElementById("main-title").innerText = "🎉 ลงทะเบียนสำเร็จ";
-          document.getElementById("sub-title").style.display = "none";
-          
-          // 🌟 2. แต่งหน้าตายอดก้าวเดินให้โดดเด่น 🌟
-          document.getElementById("step-result").innerHTML = `
-            <div style="background: #F4F9FF; border: 2px dashed #1976D2; padding: 20px; border-radius: 15px; margin: 15px 0;">
-              <div style="font-size: 45px; margin-bottom: 5px;">🏃‍♂️💨</div>
-              <div style="font-size: 14px; color: #666; margin-bottom: 5px;">ยอดปัจจุบันของคุณ</div>
-              <div style="font-size: 36px; font-weight: bold; color: #1976D2; font-family: 'Kanit', sans-serif; line-height: 1;">
-                ${res.steps.toLocaleString()} <span style="font-size: 16px; font-weight: normal;">ก้าว</span>
-              </div>
-            </div>
-            <div style="color:#28a745; font-weight:600; font-size: 16px; margin-top:10px;">เยี่ยมเลย! ยอดคุณถึง 7,000 ก้าว!</div>
-            <div style="color:#888; font-size:13px; margin-top:5px;">นับจากนี้ระบบจะดึงยอดอัตโนมัติทุกวันตอน 23:59 น. ครับ</div>
-            
-            <div style="font-size: 12px; font-weight: bold; color: #7F8C8D; background: #F0F3F4; padding: 12px; border-radius: 8px; margin-top: 25px;">
-              🔒 ข้อมูลจะเก็บเป็นความลับสูงสุด<br>ใช้สำหรับกิจกรรมนี้เท่านั้น
-            </div>
-          `;
+          document.getElementById("result-title").innerText = "✅ บันทึกและซิงค์สำเร็จ!";
+          document.getElementById("result-title").style.color = "#28a745";
+          document.getElementById("step-result").innerHTML = `ยอดปัจจุบันของคุณ: <b>${res.steps.toLocaleString()} ก้าว</b><br><br><span style='color:var(--primary); font-weight:600;'>เยี่ยมเลย! ยอดคุณถึง 7,000 ก้าว!</span><br><span style='color:#666; font-size:14px;'>นับจากนี้ระบบจะดึงยอดอัตโนมัติทุกวันตอน 23:59 น. ครับ</span>`;
           document.getElementById('rewardBtn').style.display = "inline-block";
         } 
         else if (res.status === "not_enough_steps") {
-          // 🌟 1. เปลี่ยนหัวข้อหลัก 🌟
-          document.getElementById("main-title").innerText = "✅ ลงทะเบียนสำเร็จ";
-          document.getElementById("sub-title").style.display = "none";
-          
-          // 🌟 2. แต่งหน้าตายอดก้าวเดิน (เวอร์ชันไม่ถึงเป้า) 🌟
-          document.getElementById("step-result").innerHTML = `
-            <div style="background: #FFF8E1; border: 2px dashed #FF9800; padding: 20px; border-radius: 15px; margin: 15px 0;">
-              <div style="font-size: 45px; margin-bottom: 5px;">🚶‍♂️💦</div>
-              <div style="font-size: 14px; color: #666; margin-bottom: 5px;">ยอดปัจจุบันของคุณ</div>
-              <div style="font-size: 36px; font-weight: bold; color: #FF9800; font-family: 'Kanit', sans-serif; line-height: 1;">
-                ${res.steps.toLocaleString()} <span style="font-size: 16px; font-weight: normal;">ก้าว</span>
-              </div>
-            </div>
-            <div style="color:#D32F2F; font-size:14px; font-weight:600; margin-top:10px;">ยังไม่ถึงเกณฑ์ 7,000 ก้าว (ยังไม่บันทึกคะแนน)</div>
-            <div style="color:#888; font-size:13px; margin-top:5px;">อย่าลืมเดินให้ครบนะ! หุ่นยนต์จะมาแอบดึงยอดให้อัตโนมัติเวลา 23:59 น. ของทุกวันครับ</div>
-            
-            <div style="font-size: 12px; font-weight: bold; color: #7F8C8D; background: #F0F3F4; padding: 12px; border-radius: 8px; margin-top: 25px;">
-              🔒 ข้อมูลจะเก็บเป็นความลับสูงสุด<br>ใช้สำหรับกิจกรรมนี้เท่านั้น
-            </div>
-          `;
+          document.getElementById("result-title").innerText = "🏃‍♂️ เดินต่ออีกนิดนะ!";
+          document.getElementById("result-title").style.color = "#FF9800";
+          document.getElementById("step-result").innerHTML = `ยอดปัจจุบันของคุณ: <b>${res.steps.toLocaleString()} ก้าว</b><br><br><span style='color:red; font-size:14px;'>ยังไม่ถึงเกณฑ์ 7,000 ก้าว ระบบจึงยังไม่บันทึกคะแนนให้ครับ</span><br><br><span style='color:var(--primary); font-weight:600;'>✅ แต่ระบบลงทะเบียนสำเร็จแล้ว!</span><br><span style='color:#666; font-size:14px;'>เดินให้ครบนะ! หุ่นยนต์จะมาดึงยอดให้อัตโนมัติเวลา 23:59 น. ของทุกวันครับ</span>`;
           document.getElementById('rewardBtn').style.display = "none";
         }
       } catch(e) {
-          document.getElementById("step-result").innerHTML = "<div style='color:red;'>❌ เกิดข้อผิดพลาดในการเชื่อมต่อ</div>";
+          document.getElementById("result-title").innerText = "❌ เกิดข้อผิดพลาดในการเชื่อมต่อ";
       }
     }
   </script>
