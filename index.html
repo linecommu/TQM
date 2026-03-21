@@ -70,56 +70,90 @@
     const GITHUB_DOMAIN_PATH = "linecommu.github.io/TQM/index.html"; // ห้ามมี https://
     // ========================================================
 
+    // 🌟 สำคัญมาก: ใส่แค่ Domain และ Path ห้ามใส่ https:// เด็ดขาด! 🌟
+    // ตัวอย่างที่ถูกต้อง: "mycompany.github.io/step-tracker/index.html"
+    const GITHUB_DOMAIN_PATH = "ชื่อผู้ใช้.github.io/ชื่อโปรเจกต์/index.html"; 
+    // ========================================================
+
     const FULL_URL = "https://" + GITHUB_DOMAIN_PATH;
     let lineUserId = "Unknown";
     let codeClient;
     let isRegistered = false;
 
+    // ฟังก์ชันหลักที่ทำงานทันทีที่โหลดหน้าเว็บ
     async function main() {
       try {
         await liff.init({ liffId: LIFF_ID });
+
+        // 🌟 ดักจับ: ถ้าเปิดในแอป LINE (In-App Browser) ให้เตะออกไป Chrome ทันที 🌟
         if (liff.isInClient()) {
-          // ท่าไม้ตาย: บังคับเปิด Google Chrome
-          liff.openWindow({ url: FULL_URL, external: true });
+          // โชว์หน้าจอแจ้งเตือนระหว่างที่ระบบกำลังสลับแอป
           document.body.innerHTML = `
             <div class="card" style="text-align:center;">
-              <h3 style="color:#BDC3C7">🔒 ระบบรักษาความปลอดภัย</h3>
-              <p style="margin: 20px 0;">ระบบกำลังพาคุณไปเปิดบนแอป **Google Chrome** ครับ</p>
-              <div class="sub-title">หากระบบไม่เด้งอัตโนมัติ ให้คลิกปุ่มด้านล่าง 👇</div>
-              <button class="chrome-btn" onclick="forceOpenChrome()">🚀 เปิด Google Chrome</button>
-            </div>`;
+              <h3 style="color:var(--primary);">🔒 สลับแอปพลิเคชัน</h3>
+              <p style="margin: 20px 0; color:#666;">ระบบรักษาความปลอดภัยของ Google <br>จำเป็นต้องเปิดผ่านแอป <b>Google Chrome</b> หรือ <b>Safari</b> เท่านั้นครับ</p>
+              <div style="font-size: 13px; color: #ff9800; margin-bottom: 25px;">กำลังพาคุณไปเบราว์เซอร์หลักอัตโนมัติ... 🚀</div>
+              <button class="chrome-btn" onclick="forceOpenChrome()">คลิกที่นี่ หากระบบไม่เด้งอัตโนมัติ</button>
+            </div>
+          `;
+          // เรียกใช้ฟังก์ชันท่าไม้ตาย
+          forceOpenChrome();
+          return; // หยุดการทำงานของสคริปต์ส่วนอื่นทั้งหมด เพื่อรอให้แอปสลับหน้าจอ
+        } 
+
+        // 🌟 ถ้าเปิดในเบราว์เซอร์ปกติแล้ว (Chrome/Safari) ให้ทำงานตามปกติ 🌟
+        if (!liff.isLoggedIn()) {
+          // ถ้ายังไม่ได้ล็อกอิน LINE (บนเว็บ) ให้เด้งไปหน้าล็อกอิน
+          liff.login({ redirectUri: FULL_URL });
         } else {
-          // ทำงานปกติในเบราว์เซอร์หลัก
-          if (!liff.isLoggedIn()) {
-            liff.login();
-          } else {
-            const profile = await liff.getProfile();
-            lineUserId = profile.userId;
-            checkUserInDatabase(lineUserId);
-            initGoogleAuthCodeClient();
-          }
+          // ถ้าล็อกอินแล้ว ให้ดึงข้อมูลและเตรียมระบบ Google
+          const profile = await liff.getProfile();
+          lineUserId = profile.userId;
+          checkUserInDatabase(lineUserId);
+          initGoogleAuthCodeClient();
         }
       } catch (err) {
-        document.getElementById('status-text').innerText = "เกิดข้อผิดพลาด: " + err.message;
+        document.getElementById('status-text').innerText = "เกิดข้อผิดพลาดในการโหลดระบบ: " + err.message;
         document.getElementById('status-text').style.color = "red";
       }
     }
+
+    // สั่งให้เริ่มทำงาน
     window.onload = main;
 
+    // 🌟 ท่าไม้ตาย: ฟังก์ชันบังคับเปิดเบราว์เซอร์หลัก (Deep Link) 🌟
     function forceOpenChrome() {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
       if (/android/i.test(userAgent)) {
+        // แอนดรอยด์: ยิงทะลุเข้าแอป Chrome
         window.location.href = "intent://" + GITHUB_DOMAIN_PATH + "#Intent;scheme=https;package=com.android.chrome;end;";
       } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        // iOS: เรียกแอป Google Chrome ก่อน
         window.location.href = "googlechromes://" + GITHUB_DOMAIN_PATH;
-        setTimeout(function() { window.location.href = FULL_URL; }, 2000);
-      } else { window.location.href = FULL_URL; }
+        
+        // ถ้าไม่มี Chrome ในเครื่อง ภายใน 2 วินาทีให้เด้งไปเปิด Safari แทน
+        setTimeout(function() {
+          window.location.href = FULL_URL;
+        }, 2000);
+      } else {
+        // ทดสอบในคอมพิวเตอร์ (PC)
+        window.location.href = FULL_URL;
+      }
     }
+
+    // ----------------------------------------------------------------------
+    // ส่วนล่างนี้คือฟังก์ชันเดิม (เชื่อม Google Fit และ บันทึกลง Sheet)
+    // ----------------------------------------------------------------------
 
     function initGoogleAuthCodeClient() {
       codeClient = google.accounts.oauth2.initCodeClient({
-        client_id: GOOGLE_CLIENT_ID, scope: 'https://www.googleapis.com/auth/fitness.activity.read',
-        ux_mode: 'popup', callback: (response) => { if (response.code) { sendCodeAndRegisterToGAS(response.code); } },
+        client_id: GOOGLE_CLIENT_ID, 
+        scope: 'https://www.googleapis.com/auth/fitness.activity.read',
+        ux_mode: 'popup', 
+        callback: (response) => { 
+          if (response.code) { sendCodeAndRegisterToGAS(response.code); } 
+        },
       });
     }
 
@@ -152,7 +186,9 @@
 
     function authAndFetchSteps() {
       if (!isRegistered) {
-        if (!document.getElementById('firstName').value || !document.getElementById('lastName').value) { alert("กรุณากรอกชื่อและนามสกุลให้ครบถ้วน"); return; }
+        if (!document.getElementById('firstName').value || !document.getElementById('lastName').value) { 
+          alert("กรุณากรอกชื่อและนามสกุลให้ครบถ้วน"); return; 
+        }
       }
       document.getElementById('status-text').innerText = "⏳ กำลังเชื่อมต่อกับ Google Fit...";
       codeClient.requestCode();
@@ -174,7 +210,7 @@
           document.getElementById("result-title").innerText = "✅ บันทึกและซิงค์สำเร็จ!";
           document.getElementById("result-title").style.color = "#28a745";
           document.getElementById("step-result").innerHTML = `ยอดปัจจุบันของคุณ: <b>${res.steps.toLocaleString()} ก้าว</b><br><br><span style='color:var(--primary); font-weight:600;'>เยี่ยมเลย! ยอดคุณถึง 7,000 ก้าว!</span><br><span style='color:#666; font-size:14px;'>นับจากนี้ระบบจะดึงยอดอัตโนมัติทุกวันตอน 23:59 น. ครับ</span>`;
-          document.getElementById('rewardBtn').style.display = "block";
+          document.getElementById('rewardBtn').style.display = "inline-block";
         } 
         else if (res.status === "not_enough_steps") {
           document.getElementById("result-title").innerText = "🏃‍♂️ เดินต่ออีกนิดนะ!";
