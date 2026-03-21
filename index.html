@@ -77,69 +77,57 @@
     let codeClient;
     let isRegistered = false;
 
+      // ฟังก์ชันหลัก
     async function main() {
       try {
         await liff.init({ liffId: LIFF_ID });
 
-        // 🌟 ดักจับ: ถ้าเปิดในแอป LINE ให้ยิงคำสั่งบังคับ Chrome ทันที 🌟
+        // ถ้าเปิดอยู่ในแอป LINE ให้บังคับยิงไป Google Chrome ทันที!
         if (liff.isInClient()) {
-          // หน้าจอโหลด เผื่อรอแอป Chrome เด้งขึ้นมา
-          document.body.innerHTML = `
-            <div class="card" style="text-align:center; padding: 40px 20px;">
-              <h3 style="color:#1976D2; font-size: 24px;">🚀 สลับแอปพลิเคชัน</h3>
-              <p style="margin: 20px 0; color:#666; font-size: 16px;">
-                กำลังพาคุณไปแอป <br><b style="color:#FF9800; font-size: 18px;">Google Chrome</b> อัตโนมัติ...
-              </p>
-              <button onclick="forceOpenChrome()" style="padding: 16px; font-size: 18px; width: 100%; background-color: #1976D2; color: white; border: none; border-radius: 12px; font-family: 'Kanit', sans-serif; cursor: pointer; box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);">
-                คลิกที่นี่ หากไม่เด้งอัตโนมัติ
-              </button>
-            </div>
-          `;
-
-          // เรียกใช้ฟังก์ชันท่าไม้ตายทันที! (ไม่ใช้ liff.openWindow แล้ว)
+          document.getElementById('welcome-text').innerText = "กำลังสลับไปเปิดแอป Google Chrome...";
+          document.getElementById('welcome-text').style.color = "#00B900";
           forceOpenChrome();
-
-          return; // หยุดการทำงานส่วนอื่น
-        } 
-
-        // 🌟 ถ้าอยู่ใน Chrome แล้ว ให้ทำงานตามปกติ 🌟
-        if (!liff.isLoggedIn()) {
-          liff.login({ redirectUri: FULL_URL });
         } else {
-          const profile = await liff.getProfile();
-          lineUserId = profile.userId;
-          checkUserInDatabase(lineUserId);
-          initGoogleAuthCodeClient();
+          // ถ้าเปิดใน Chrome สำเร็จแล้ว ให้ทำงานตามปกติ
+          if (!liff.isLoggedIn()) {
+            liff.login();
+          } else {
+            const profile = await liff.getProfile();
+            lineUserId = profile.userId;
+            checkUserInDatabase(lineUserId);
+            initGoogleFit();
+          }
         }
       } catch (err) {
-        document.getElementById('status-text').innerText = "เกิดข้อผิดพลาดในการโหลด: " + err.message;
-        document.getElementById('status-text').style.color = "red";
+        document.getElementById('welcome-text').innerText = "เกิดข้อผิดพลาด: " + err.message;
+        document.getElementById('welcome-text').style.color = "red";
       }
     }
 
     window.onload = main;
 
-    // 🌟 ท่าไม้ตาย: บังคับเปิดแอป Google Chrome เท่านั้น 🌟
+    // 🌟 ท่าไม้ตาย: ฟังก์ชันบังคับเปิดแอป Google Chrome (Deep Link) 🌟
     function forceOpenChrome() {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
       if (/android/i.test(userAgent)) {
-        // สำหรับ Android: บังคับเจาะจงไปที่แอป com.android.chrome โดยตรง
+        // สำหรับ Android: บังคับยิงเข้า Package ของ Google Chrome โดยตรง
         window.location.href = "intent://" + GITHUB_DOMAIN_PATH + "#Intent;scheme=https;package=com.android.chrome;end;";
       } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-        // สำหรับ iOS (iPhone): ใช้ googlechromes:// เพื่อปลุกแอป Chrome
+        // สำหรับ iOS: ใช้คำสั่ง googlechromes:// เพื่อเรียกแอป Chrome
         window.location.href = "googlechromes://" + GITHUB_DOMAIN_PATH;
         
-        // 🛡️ แผนสำรองสำหรับ iPhone: ถ้าพนักงานคนไหน "ไม่มีแอป Chrome" ในเครื่อง 
-        // ภายใน 2 วินาที ระบบจะยอมให้เด้งไป Safari แทน เพื่อไม่ให้หน้าจอค้าง
+        // สำรองสำหรับ iOS: ถ้าพนักงานคนไหนไม่ได้ลงแอป Chrome ไว้ในเครื่อง 
+        // ภายใน 2 วินาทีระบบจะพาไปเปิดใน Safari แทน เพื่อไม่ให้หน้าจอค้าง
         setTimeout(function() {
           window.location.href = FULL_URL;
         }, 2000);
       } else {
-        // สำหรับการเปิดบนคอมพิวเตอร์
+        // สำหรับทดสอบบน PC
         window.location.href = FULL_URL;
       }
     }
+
 
     // ----------------------------------------------------------------------
     // ส่วนล่างนี้คือฟังก์ชันเดิมทั้งหมด
