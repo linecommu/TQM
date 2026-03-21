@@ -30,11 +30,20 @@
     #result-title { font-family: 'Kanit', sans-serif; font-weight: 600; }
     #rewardBtn { display: none; margin-top: 20px; text-decoration: none; text-align: center; }
     .footer { text-align: center; font-size: 12px; color: var(--text-sub); margin-top: 30px; }
+    
+    /* 🌟 เพิ่มส่วนตกแต่งโลโก้ 🌟 */
+    .logo-header { text-align: center; margin-bottom: 20px; }
+    .logo-header img { max-width: 150px; height: auto; }
+    
     @media (min-width: 768px) { body { padding: 50px; } .card { padding: 40px; } }
   </style>
 </head>
 <body>
   <div class="card">
+    <div class="logo-header">
+      <img src="https://img2.pic.in.th/Google-Fit.png" alt="Channel Academy Logo">
+    </div>
+    
     <h2>ลงทะเบียนและเชื่อมต่อข้อมูล</h2>
     <div class="sub-title">User Registration & Google Fit Sync</div>
     
@@ -53,7 +62,7 @@
     <div id="result-section" style="display: none; text-align: center;">
       <h3 id="result-title"></h3>
       <p id="step-result" style="font-size: 15px; margin: 15px 0;"></p>
-      <a href="ใส่_URL_สำหรับลงทะเบียนรางวัลตรงนี้" target="_blank" class="sync-btn" id="rewardBtn">ลงทะเบียน LINE Reward</a>
+      <a href="https://linecommu.github.io/Leaderboard/leaderboard.html" target="_blank" class="sync-btn" id="rewardBtn">ดูอันดับความฟิต</a>
     </div>
   </div>
   
@@ -155,7 +164,8 @@
         
         if (user) {
           isRegistered = true;
-          document.getElementById('welcome-text').innerHTML = `ยินดีต้อนรับ คุณ <span style="color:var(--primary); font-size:18px;">${user.firstName}</span>`;
+          // 🌟 แก้ไขตรงนี้: เพิ่มการแสดงนามสกุล 🌟
+          document.getElementById('welcome-text').innerHTML = `ยินดีต้อนรับ คุณ <span style="color:var(--primary); font-size:18px;">${user.firstName} ${user.lastName}</span>`;
           if(user.hasToken) {
             document.getElementById('welcome-text').innerHTML += "<br><span style='color:#28a745; font-size: 14px; font-weight: 400;'>✅ ระบบจะดึงยอดก้าวเดินของคุณให้ทุกวันอัตโนมัติครับ</span>";
             document.getElementById('syncBtn').style.display = "none";
