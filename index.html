@@ -63,13 +63,12 @@
   </div>
 
  <script>
-    // ========= 1. ตั้งค่า 4 ตัวแปรนี้ให้ครบและถูกต้องเป๊ะๆ =========
+    // ========= 1. ตั้งค่าตัวแปรให้ครบ =========
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywpUQFxq4D8hrROE4cUKUJiESWO6u9_FbNecjre7oAYL11gzHeBQMcIUsnlkoaqKbhUQ/exec';
     const GOOGLE_CLIENT_ID = '731149810126-a014l53tne9jibs12bb9btfmbl3clktc.apps.googleusercontent.com';
     const LIFF_ID = '2009549576-QRJfiper';
     
-    // 🌟 สำคัญมาก: ใส่แค่ Domain และ Path ห้ามใส่ https:// เด็ดขาด! 🌟
-    // ตัวอย่างที่ถูกต้อง: "mycompany.github.io/step-tracker/index.html"
+    // 🌟 ใส่แค่ Domain และ Path ห้ามใส่ https:// เด็ดขาด! 🌟
     const GITHUB_DOMAIN_PATH = "linecommu.github.io/TQM/index.html"; 
     // ========================================================
 
@@ -78,70 +77,74 @@
     let codeClient;
     let isRegistered = false;
 
-    // ฟังก์ชันหลักที่ทำงานทันทีที่โหลดหน้าเว็บ
     async function main() {
       try {
         await liff.init({ liffId: LIFF_ID });
 
-        // 🌟 ดักจับ: ถ้าเปิดในแอป LINE (In-App Browser) ให้เตะออกไป Chrome ทันที 🌟
+        // 🌟 ดักจับ: ถ้าเปิดในแอป LINE ให้เตะออกไปเบราว์เซอร์หลัก 🌟
         if (liff.isInClient()) {
-          // โชว์หน้าจอแจ้งเตือนระหว่างที่ระบบกำลังสลับแอป
+          // โชว์หน้าจอที่มีปุ่มกด เผื่อมือถือบล็อกการเด้งอัตโนมัติ
           document.body.innerHTML = `
-            <div class="card" style="text-align:center;">
-              <h3 style="color:var(--primary);">🔒 สลับแอปพลิเคชัน</h3>
-              <p style="margin: 20px 0; color:#666;">ระบบรักษาความปลอดภัยของ Google <br>จำเป็นต้องเปิดผ่านแอป <b>Google Chrome</b> หรือ <b>Safari</b> เท่านั้นครับ</p>
-              <div style="font-size: 13px; color: #ff9800; margin-bottom: 25px;">กำลังพาคุณไปเบราว์เซอร์หลักอัตโนมัติ... 🚀</div>
-              <button class="chrome-btn" onclick="forceOpenChrome()">คลิกที่นี่ หากระบบไม่เด้งอัตโนมัติ</button>
+            <div class="card" style="text-align:center; padding: 40px 20px;">
+              <h3 style="color:#1976D2; font-size: 24px;">🚀 สลับแอปพลิเคชัน</h3>
+              <p style="margin: 20px 0; color:#666; font-size: 16px;">
+                ระบบของ Google ไม่อนุญาตให้เชื่อมต่อผ่านแอป LINE<br><br>
+                <span style="color:#FF9800; font-weight:600;">กำลังพาคุณไปเบราว์เซอร์หลักอัตโนมัติ...</span><br><br>
+                หากหน้าจอไม่เปลี่ยนไปแอปอื่น<br>กรุณากดปุ่มด้านล่างนี้ครับ 👇
+              </p>
+              <button onclick="forceOpenChrome()" style="padding: 16px; font-size: 18px; width: 100%; background-color: #1976D2; color: white; border: none; border-radius: 12px; font-family: 'Kanit', sans-serif; cursor: pointer; box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);">
+                เปิดแอปเบราว์เซอร์ (Chrome / Safari)
+              </button>
             </div>
           `;
-          // เรียกใช้ฟังก์ชันท่าไม้ตาย
-          forceOpenChrome();
-          return; // หยุดการทำงานของสคริปต์ส่วนอื่นทั้งหมด เพื่อรอให้แอปสลับหน้าจอ
+
+          // วิธีที่ 1: ใช้คำสั่งทางการของ LINE สั่งเปิดเบราว์เซอร์หลัก (เด้งทันทีในมือถือส่วนใหญ่)
+          liff.openWindow({
+            url: FULL_URL,
+            external: true
+          });
+
+          return; // หยุดการทำงานส่วนอื่น รอให้แอปสลับหน้าจอ
         } 
 
         // 🌟 ถ้าเปิดในเบราว์เซอร์ปกติแล้ว (Chrome/Safari) ให้ทำงานตามปกติ 🌟
         if (!liff.isLoggedIn()) {
-          // ถ้ายังไม่ได้ล็อกอิน LINE (บนเว็บ) ให้เด้งไปหน้าล็อกอิน
           liff.login({ redirectUri: FULL_URL });
         } else {
-          // ถ้าล็อกอินแล้ว ให้ดึงข้อมูลและเตรียมระบบ Google
           const profile = await liff.getProfile();
           lineUserId = profile.userId;
           checkUserInDatabase(lineUserId);
           initGoogleAuthCodeClient();
         }
       } catch (err) {
-        document.getElementById('status-text').innerText = "เกิดข้อผิดพลาดในการโหลดระบบ: " + err.message;
+        document.getElementById('status-text').innerText = "เกิดข้อผิดพลาดในการโหลด: " + err.message;
         document.getElementById('status-text').style.color = "red";
       }
     }
 
-    // สั่งให้เริ่มทำงาน
     window.onload = main;
 
-    // 🌟 ท่าไม้ตาย: ฟังก์ชันบังคับเปิดเบราว์เซอร์หลัก (Deep Link) 🌟
+    // 🌟 ท่าไม้ตาย (วิธีที่ 2): สำหรับกรณีที่พนักงานต้องกดปุ่มเอง 🌟
     function forceOpenChrome() {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
       if (/android/i.test(userAgent)) {
-        // แอนดรอยด์: ยิงทะลุเข้าแอป Chrome
+        // Android: เจาะจงไปแอป Google Chrome
         window.location.href = "intent://" + GITHUB_DOMAIN_PATH + "#Intent;scheme=https;package=com.android.chrome;end;";
       } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
         // iOS: เรียกแอป Google Chrome ก่อน
         window.location.href = "googlechromes://" + GITHUB_DOMAIN_PATH;
-        
-        // ถ้าไม่มี Chrome ในเครื่อง ภายใน 2 วินาทีให้เด้งไปเปิด Safari แทน
+        // ถ้าไม่มี Chrome ให้เด้งไปเปิด Safari แทน
         setTimeout(function() {
           window.location.href = FULL_URL;
-        }, 2000);
+        }, 1500);
       } else {
-        // ทดสอบในคอมพิวเตอร์ (PC)
         window.location.href = FULL_URL;
       }
     }
 
     // ----------------------------------------------------------------------
-    // ส่วนล่างนี้คือฟังก์ชันเดิม (เชื่อม Google Fit และ บันทึกลง Sheet)
+    // ส่วนล่างนี้คือฟังก์ชันเดิม (เชื่อม Google Fit)
     // ----------------------------------------------------------------------
 
     function initGoogleAuthCodeClient() {
