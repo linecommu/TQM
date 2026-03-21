@@ -183,7 +183,7 @@
           isRegistered = true;
           document.getElementById('welcome-text').innerHTML = `ยินดีต้อนรับ คุณ <span style="color:var(--primary); font-size:18px;">${user.firstName} ${user.lastName}</span>`;
           if(user.hasToken) {
-            document.getElementById('welcome-text').innerHTML += "<br><span style='color:#28a745; font-size: 14px; font-weight: 400;'>✅ ระบบจะดึงยอดก้าวเดินของคุณให้ทุกวันอัตโนมัติครับ</span>";
+            document.getElementById('welcome-text').innerHTML += "<br><span style='color:#28a745; font-size: 14px; font-weight: 400;'>ระบบจะดึงยอดก้าวเดินของคุณให้ทุกวันอัตโนมัติครับ</span>";
             document.getElementById('syncBtn').style.display = "none";
           } else {
             document.getElementById('syncBtn').style.display = "block";
@@ -257,7 +257,7 @@
           document.getElementById('rewardBtn').style.display = "inline-block";
         } 
         else if (res.status === "not_enough_steps") {
-          document.getElementById("main-title").innerText = "✅ ลงทะเบียนสำเร็จ";
+          document.getElementById("main-title").innerText = "ลงทะเบียนสำเร็จ";
           document.getElementById("sub-title").style.display = "none";
           
           document.getElementById("step-result").innerHTML = `
