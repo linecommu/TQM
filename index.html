@@ -2,11 +2,12 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>ระบบลงทะเบียนพนักงาน Google Fit Sync</title>
+  <title>บันทึกก้าวเดิน</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
   <style>
     :root {
       --primary: #1976D2;      /* สีฟ้าคราม公司โทน */
@@ -18,34 +19,36 @@
     }
     body { font-family: 'Sarabun', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-main); }
     .card { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; box-sizing: border-box; transition: transform 0.3s ease; }
-    h2, h3 { font-family: 'Kanit', sans-serif; text-align: center; color: var(--primary); margin: 0 0 5px 0; }
+    
+    /* 🌟 [แก้ปัญหาที่ 1] ชื่อแอปต้องตรงกับใน Google Cloud 🌟 */
+    h2, h3 { font-family: 'Kanit', sans-serif; text-align: center; color: var(--primary); margin: 0 0 5px 0; font-size: 26px;}
+    
+    /* 🌟 [แก้ปัญหาที่ 4] เพิ่มคำอธิบายแอป 🌟 */
+    .app-desc { font-size: 13px; color: var(--text-sub); text-align: center; margin-bottom: 20px; background: #F0F4F8; padding: 12px; border-radius: 8px; line-height: 1.5; }
+    
     .sub-title { font-size: 13px; color: var(--text-sub); text-align: center; margin-bottom: 25px; }
     input { width: 100%; padding: 12px 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: border 0.3s ease; }
     input:focus { border: 2px solid var(--primary); outline: none; }
-    .sync-btn, .chrome-btn { width: 100%; padding: 14px; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; font-family: 'Kanit', sans-serif; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,185,0,0.2); }
+    .sync-btn, .chrome-btn { width: 100%; padding: 14px; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; font-family: 'Kanit', sans-serif; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .sync-btn { background-color: var(--primary); }
     .sync-btn:hover { background-color: var(--primary-dark); }
-    .chrome-btn { background-color: #4285F4; box-shadow: 0 4px 10px rgba(66,133,244,0.3); }
-    #status-text { text-align: center; font-size: 14px; color: var(--text-sub); margin-top: 15px; }
-    #result-title { font-family: 'Kanit', sans-serif; font-weight: 600; display: none; } /* ซ่อนไว้ใช้หัวข้อหลักแทน */
-    #rewardBtn { display: none; margin-top: 20px; text-decoration: none; text-align: center; }
-    .footer { text-align: center; font-size: 12px; color: var(--text-sub); margin-top: 30px; }
     
-    /* 🌟 เพิ่มส่วนตกแต่งโลโก้ 🌟 */
+    /* สไตล์ปุ่มเข้าสู่ระบบด้วย LINE */
+    .btn-line { background-color: #00B900; box-shadow: 0 4px 10px rgba(0,185,0,0.3); margin-top: 10px; }
+    .btn-line:hover { background-color: #009900; }
+
+    #status-text { text-align: center; font-size: 14px; color: var(--text-sub); margin-top: 15px; }
+    #result-title { font-family: 'Kanit', sans-serif; font-weight: 600; display: none; } 
+    #rewardBtn { display: none; margin-top: 20px; text-decoration: none; text-align: center; }
+    
+    /* 🌟 [แก้ปัญหาที่ 2] ตกแต่ง Footer และลิงก์ Privacy 🌟 */
+    .footer { text-align: center; font-size: 12px; color: var(--text-sub); margin-top: 30px; line-height: 1.6;}
+    .footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .footer a:hover { text-decoration: underline; }
+    
     .logo-header { text-align: center; margin-bottom: 20px; }
     .logo-header img { max-width: 150px; height: auto; }
-
-    /* 🌟 เพิ่มสไตล์สำหรับรูปโปรไฟล์ LINE 🌟 */
-    .profile-pic {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid var(--primary);
-      box-shadow: 0 4px 15px rgba(25, 118, 210, 0.2);
-      margin: 0 auto 15px auto;
-      display: none; /* ซ่อนไว้ก่อนจนกว่าจะโหลดรูปเสร็จ */
-    }
+    .profile-pic { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 4px 15px rgba(25, 118, 210, 0.2); margin: 0 auto 15px auto; display: none; }
     
     @media (min-width: 768px) { body { padding: 50px; } .card { padding: 40px; } }
   </style>
@@ -56,8 +59,11 @@
       <img src="https://img2.pic.in.th/Google-Fit.png" alt="Channel Academy Logo">
     </div>
     
-    <h2 id="main-title">ลงทะเบียนเชื่อมต่อข้อมูล</h2>
-    <div id="sub-title" class="sub-title">อัตโนมัติ ใช้สำหรับกิจกรรมเท่านั้น</div>
+    <h2 id="main-title">บันทึกก้าวเดิน</h2>
+    
+    <div class="app-desc" id="appDescription">
+      แอปพลิเคชันสำหรับกิจกรรมส่งเสริมสุขภาพพนักงาน โดยระบบจะเชื่อมต่อกับ Google Fit เพื่อใช้อัปเดตจำนวนก้าวเดินของคุณขึ้นตารางอันดับแบบอัตโนมัติ
+    </div>
     
     <div id="form-section">
       <div style="text-align: center;">
@@ -66,6 +72,10 @@
 
       <div id="welcome-text" style="text-align: center; margin-bottom: 20px; font-weight: 600;">กำลังตรวจสอบสถานะ...</div>
       
+      <button class="sync-btn btn-line" id="lineLoginBtn" onclick="liff.login({ redirectUri: FULL_URL })" style="display: none;">
+        เข้าสู่ระบบด้วย LINE
+      </button>
+
       <div id="register-section" style="display: none;">
         <input type="text" id="firstName" placeholder="ชื่อจริง (ไม่ต้องใส่คำนำหน้า) ">
         <input type="text" id="lastName" placeholder="นามสกุล">
@@ -84,6 +94,7 @@
   
   <div class="footer">
     ระบบลงทะเบียนพนักงานสะสมก้าว © 2026<br>
+    <a href="privacy.html" target="_blank">นโยบายความเป็นส่วนตัว (Privacy Policy)</a>
   </div>
 
  <script>
@@ -91,8 +102,6 @@
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywpUQFxq4D8hrROE4cUKUJiESWO6u9_FbNecjre7oAYL11gzHeBQMcIUsnlkoaqKbhUQ/exec';
     const GOOGLE_CLIENT_ID = '731149810126-a014l53tne9jibs12bb9btfmbl3clktc.apps.googleusercontent.com';
     const LIFF_ID = '2009549576-QRJfiper';
-    
-    // 🌟 ใส่แค่ Domain และ Path ห้ามใส่ https:// เด็ดขาด! 🌟
     const GITHUB_DOMAIN_PATH = "linecommu.github.io/TQM/index.html"; 
     // ========================================================
 
@@ -101,34 +110,32 @@
     let codeClient;
     let isRegistered = false;
 
-     // ฟังก์ชันหลัก
     async function main() {
       try {
         await liff.init({ liffId: LIFF_ID });
 
-        // ถ้าเปิดอยู่ในแอป LINE ให้บังคับยิงไป Google Chrome ทันที!
         if (liff.isInClient()) {
           document.getElementById('welcome-text').innerText = "กำลังสลับไปเปิดแอป Google Chrome...";
           document.getElementById('welcome-text').style.color = "#00B900";
           forceOpenChrome();
         } else {
-          // ถ้าเปิดใน Chrome สำเร็จแล้ว ให้ทำงานตามปกติ
+          // 🌟 [แก้ปัญหาที่ 3] ไม่บังคับ Login อัตโนมัติ ให้ Google เข้ามาอ่านเว็บได้ 🌟
           if (!liff.isLoggedIn()) {
-            liff.login({ redirectUri: FULL_URL });
+             document.getElementById('welcome-text').style.display = "none";
+             document.getElementById('lineLoginBtn').style.display = "block"; // โชว์ปุ่ม LINE Login แทน
           } else {
+            // กรณีล็อกอินผ่านแล้ว ทำงานตามปกติ
+            document.getElementById('lineLoginBtn').style.display = "none";
             const profile = await liff.getProfile();
             lineUserId = profile.userId;
 
-            // 🌟 ดึงรูปโปรไฟล์ LINE มาแสดง 🌟
             if (profile.pictureUrl) {
               const picElement = document.getElementById('userProfilePic');
               picElement.src = profile.pictureUrl;
-              picElement.style.display = 'block'; // สั่งให้แสดงรูปเมื่อโหลดเสร็จ
+              picElement.style.display = 'block'; 
             }
 
             checkUserInDatabase(lineUserId);
-            
-            // 🌟 แก้ไขตรงนี้: เปลี่ยนเป็นชื่อฟังก์ชันที่ถูกต้อง 🌟
             initGoogleAuthCodeClient(); 
           }
         }
@@ -139,35 +146,22 @@
     }
     window.onload = main;
 
-    // 🌟 ท่าไม้ตาย: ฟังก์ชันบังคับเปิดแอป Google Chrome (Deep Link) 🌟
     function forceOpenChrome() {
       const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
       if (/android/i.test(userAgent)) {
         window.location.href = "intent://" + GITHUB_DOMAIN_PATH + "#Intent;scheme=https;package=com.android.chrome;end;";
       } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
         window.location.href = "googlechromes://" + GITHUB_DOMAIN_PATH;
-        setTimeout(function() {
-          window.location.href = FULL_URL;
-        }, 2000);
-      } else {
-        window.location.href = FULL_URL;
-      }
+        setTimeout(function() { window.location.href = FULL_URL; }, 2000);
+      } else { window.location.href = FULL_URL; }
     }
-
-
-    // ----------------------------------------------------------------------
-    // ส่วนล่างนี้คือฟังก์ชันเดิมทั้งหมด
-    // ----------------------------------------------------------------------
 
     function initGoogleAuthCodeClient() {
       codeClient = google.accounts.oauth2.initCodeClient({
         client_id: GOOGLE_CLIENT_ID, 
         scope: 'https://www.googleapis.com/auth/fitness.activity.read',
         ux_mode: 'popup', 
-        callback: (response) => { 
-          if (response.code) { sendCodeAndRegisterToGAS(response.code); } 
-        },
+        callback: (response) => { if (response.code) { sendCodeAndRegisterToGAS(response.code); } },
       });
     }
 
@@ -210,11 +204,11 @@
 
     async function sendCodeAndRegisterToGAS(authCode) {
       document.getElementById("form-section").style.display = "none";
+      document.getElementById("appDescription").style.display = "none";
       document.getElementById("result-section").style.display = "block";
       document.getElementById("step-result").innerHTML = "<div style='color:#666;'>⏳ กำลังตั้งค่าระบบ...</div>";
         
       try {
-        // 🌟 1. ดึง URL รูปโปรไฟล์ที่โชว์อยู่บนหน้าจอ 🌟
         const picElement = document.getElementById('userProfilePic');
         let userPicUrl = "";
         if (picElement && picElement.src && !picElement.src.includes("index.html")) {
@@ -223,7 +217,6 @@
 
         const response = await fetch(GAS_WEB_APP_URL, {
           method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          // 🌟 2. เพิ่ม pictureUrl เข้าไปในข้อมูลที่จะส่ง 🌟
           body: JSON.stringify({ 
             action: 'registerAndSync', 
             uid: lineUserId, 
@@ -237,7 +230,6 @@
           
         if (res.status === "success") {
           document.getElementById("main-title").innerText = "🎉 ลงทะเบียนสำเร็จ";
-          document.getElementById("sub-title").style.display = "none";
           
           document.getElementById("step-result").innerHTML = `
             <div style="background: #F4F9FF; border: 2px dashed #1976D2; padding: 20px; border-radius: 15px; margin: 15px 0;">
@@ -258,7 +250,6 @@
         } 
         else if (res.status === "not_enough_steps") {
           document.getElementById("main-title").innerText = "ลงทะเบียนสำเร็จ";
-          document.getElementById("sub-title").style.display = "none";
           
           document.getElementById("step-result").innerHTML = `
             <div style="background: #FFF8E1; border: 2px dashed #FF9800; padding: 20px; border-radius: 15px; margin: 15px 0;">
